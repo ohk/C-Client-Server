@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/types.h>
+#include "executer.h"
 
 void parse(char *line, char **argv)
 {
@@ -44,19 +45,8 @@ int execute(char **argv)
 int executeShellCommand(char *line)
 {
     char *argv[64];
-    int a;
     parse(line, argv);                /*   parse the line               */
     if (strcmp(argv[0], "exit") == 0) /* is it an "exit"?     */
         exit(0);                      /*   exit if it is                */
     return execute(argv);                    /* otherwise, execute the command */
-}
-
-int main()
-{
-    while (1 == 1)
-    {
-        char line[1024];
-        gets(line);
-        executeShellCommand(line);
-    }
 }

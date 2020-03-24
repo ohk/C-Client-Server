@@ -1,17 +1,27 @@
-CC = gcc
-CFLAGS = -O2 -Wall -pedantic
-LIBS = -lm -lnsl
+CC=gcc
+CFLAGS=-Wall -O2
+LIBS=
+OBJECTSERVER=executer.o
+OUTPUTSERVER=server
+OUTPUTCLIENT=client
+OUTPUTS=server client
 
-server: server.o executer.o
-    $(CC) $(CFLAGS) $(LIBS) -o server server.o executer.o
+all:server client
 
-server.o: server.c executer.h
-    $(CC) $(CFLAGS) -c server.c
+server:$(OBJECTSERVER)
+	$(CC) $(CFLAGS) server.c $(OBJECTSERVER) -o $(OUTPUTSERVER)
 
-executer.o: executer.c executer.h
-    $(CC) $(CFLAGS) -c executer.c
+client:
+	$(CC) $(CFLAGS) client.c -o $(OUTPUTCLIENT)
+
+executer.o:
+	$(CC) $(CFLAGS) -c executer.c
+
+
 clean:
-    rm -f test *.o
+	rm -f *.o
+	rm -f $(OUTPUTS)
 
-install: test
-    cp test /usr/bin
+rebuild:
+	make clean
+	make
