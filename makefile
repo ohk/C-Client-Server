@@ -2,9 +2,9 @@ CC=gcc
 CFLAGS=-Wall -O2
 LIBS=
 OBJECTSERVER=executer.o
-OUTPUTSERVER=server
-OUTPUTCLIENT=client
-OUTPUTS=server client
+OUTPUTSERVER=UKSU_server
+OUTPUTCLIENT=UKSU_client
+OUTPUTS=UKSU_client UKSU_server
 
 all:server client
 

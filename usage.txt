@@ -1,0 +1,2 @@
+./UKSU_server -r 8083 -u a -p a 
+./UKSU_client -p a -u a -r 8083 -h 127.0.0.1
