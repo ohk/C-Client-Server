@@ -11,5 +11,5 @@ The username and passwords you provided when running both the server and the cli
 
 # TODO
 
-[] Cannot verify if username and password are long
-[] Shell commands is processing but giving an error message.
+[ ] Cannot verify if username and password are long
+[ ] Shell commands is processing but giving an error message.
