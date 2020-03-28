@@ -5,6 +5,7 @@
 #include <netdb.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #define MAX 1024
 #define SA struct sockaddr
@@ -23,12 +24,15 @@ void func(int sockfd)
         bzero(buff, sizeof(buff));
         printf("Enter the command : ");
         n = 0;
-        while ((buff[n++] = getchar()) != '\n')
-            ;
+        fgets(buff, MAX, stdin); 
+
+        strtok(buff, "\n");
+        strcat(buff," 2>&1");
+        
         write(sockfd, buff, sizeof(buff));
         bzero(buff, sizeof(buff));
         read(sockfd, buff, sizeof(buff));
-        printf("Server Message\n\t%s\n", buff);
+        printf("%s\n", buff);
         if ((strncmp(buff, "exit", 4)) == 0)
         {
             printf("Client Exit...\n");
@@ -40,13 +44,10 @@ void func(int sockfd)
 int login(char *loginInfo, int sockfd)
 {
     char buff[MAX];
-    int n, confirm = 0;
+    int confirm = 0;
     bzero(buff, MAX);
-    write(sockfd, loginInfo, sizeof(loginInfo));
-    printf("Data Send it: %s\n", loginInfo);
+    write(sockfd, loginInfo, strlen(loginInfo));
     read(sockfd, buff, sizeof(buff));
-    printf("From Server : %s\n", buff);
-    printf("Kıyaslama: %d\n", strcmp(buff, "Confirmed"));
     if (strcmp(buff, "Confirmed") == 0)
     {
         confirm = 1;
@@ -58,15 +59,14 @@ int login(char *loginInfo, int sockfd)
     }
 
     write(sockfd, buff, sizeof(buff));
-    printf("Data Send it: %s\n", buff);
     return confirm;
 }
 
 int main(int argc, char **argv)
 {
-    int port = 0, port_flag = 0, host_flag = 0, username_flag = 0, password_flag = 0, option, sockfd, connfd;
+    int port = 0, port_flag = 0, host_flag = 0, username_flag = 0, password_flag = 0, option, sockfd;
     char *host = NULL, *username = NULL, *password = NULL, *loginInfo;
-    struct sockaddr_in servaddr, cli;
+    struct sockaddr_in servaddr;
     opterr = 0;
 
     while ((option = getopt(argc, argv, "r:h:u:p:")) != -1)
@@ -130,11 +130,13 @@ int main(int argc, char **argv)
         // connect the client socket to server socket
         if (connect(sockfd, (SA *)&servaddr, sizeof(servaddr)) != 0)
         {
-            printf("connection with the server failed...\n");
+            printf("Connection with the server failed...\n");
             exit(0);
         }
         else
-            printf("connected to the server..\n");
+            printf("Connected to the server..\nChecking username and password.\n");
+
+        //create username-password  
         char *u1 = "u:";
         char *u2 = "p:";
         loginInfo = (char *)malloc(7 + strlen(username) + strlen(password));
@@ -142,16 +144,18 @@ int main(int argc, char **argv)
         strcat(loginInfo, username);
         strcat(loginInfo,u2);
         strcat(loginInfo, password);
+
+        //Login
         if (login(loginInfo, sockfd) == 1)
         {
-            printf("Login ");
+            printf("Login Successful\n");
             func(sockfd);
         }
         else
         {
-            printf("Login Failed");
-            close(sockfd);
+            printf("Login Failed. System is Closed");
         }
+        close(sockfd);
     }
     else
     {

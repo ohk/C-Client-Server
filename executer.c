@@ -1,52 +1,25 @@
 #include <stdio.h>
-#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
 #include "executer.h"
 
-void parse(char *line, char **argv)
-{
-    while (*line != '\0')
-    { /* if not the end of line ....... */
-        while (*line == ' ' || *line == '\t' || *line == '\n')
-            *line++ = '\0'; /* replace white spaces with 0    */
-        *argv++ = line;     /* save the argument position     */
-        while (*line != '\0' && *line != ' ' &&
-               *line != '\t' && *line != '\n')
-            line++; /* skip the argument until ...    */
-    }
-    *argv = '\0'; /* mark the end of argument list  */
-}
+#define MAX 1024
 
-int execute(char **argv)
-{
-    pid_t pid;
-    int status;
+char* executeShellCommand(char *buff){
+    char result[MAX]={0x0},*tmp = (char *)malloc(MAX);
 
-    if ((pid = fork()) < 0)
-    { /* fork a child process           */
-        printf("*** ERROR: forking child process failed\n");
-        return -1;
+    FILE *cmd=popen(buff, "r");
+    if (cmd == 0)
+    {
+        strcpy(tmp, "Could not execute\n");
     }
-    else if (pid == 0)
-    { /* for the child process:         */
-        if (execvp(*argv, argv) < 0)
-        { /* execute the command  */
-            printf("*** ERROR: exec failed\n");
-            return -2;
-        }
+    strcpy(tmp, ".: System Message :.\n");
+    while (fgets(result, sizeof(result), cmd) !=NULL){
+           strcat(tmp, result);
     }
-    else
-    {                                /* for the parent:      */
-        while (wait(&status) != pid) /* wait for completion  */
-            ;
+    pclose(cmd);
+    if(strcmp(tmp,".: System Message :.\n") == 0){
+        strcat(tmp,"Command Executed.");
     }
-    return 0;
-}
-
-int executeShellCommand(char *line)
-{
-    char *argv[64];
-    parse(line, argv);                /*   parse the line               */
-    if (strcmp(argv[0], "exit") == 0) /* is it an "exit"?     */
-        exit(0);                      /*   exit if it is                */
-    return execute(argv);                    /* otherwise, execute the command */
+    return tmp;
 }

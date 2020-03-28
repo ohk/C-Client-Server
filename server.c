@@ -7,7 +7,7 @@
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
-
+#include <arpa/inet.h>
 #include "executer.h"
 
 #define MAX 1024
@@ -18,77 +18,63 @@ void printUsage()
     printf("USAGE: ./UKSU_server -r <port> -u <username> -p <password>");
 }
 
-// Function designed for chat between client and server.
 void func(int sockfd)
 {
     char buff[MAX];
-	char *result_t;
-	int result;
+    char *result_t;
     for (;;)
     {
         bzero(buff, MAX);
 
-		read(sockfd, buff, sizeof(buff));
-		result = executeShellCommand(buff);
+        read(sockfd, buff, sizeof(buff));
+        result_t = executeShellCommand(buff);
 
-		printf("Client Request: %s\n", buff);
-		bzero(buff, MAX);
-		if (result == 0)
-		{
-			result_t = "Execute is completed\n";
-		}
-		else if (result == -1)
-		{
-			result_t = "*** ERROR: forking child process failed\n";
-		}
-		else
-		{
-			result_t = "*** ERROR: exec failed\n";
-		}
+        printf(".: Client Request :.\n %s", buff);
+        printf("%s\n", result_t);
 
-		write(sockfd, result_t, MAX);
+        bzero(buff, MAX);
 
-		if (strncmp("exit", buff, 4) == 0)
-		{
-			printf("Server Exit...\n");
-			break;
-		}
+        write(sockfd, result_t, MAX);
+
+        if (strncmp("exit", buff, 4) == 0)
+        {
+            printf("Server Exit...\n");
+            break;
+        }
     }
 }
 
 int login(char *loginInfo, int sockfd)
 {
     char buff[MAX];
-    int n, confirm = 0;
-        bzero(buff, MAX);
-    read(sockfd, buff, sizeof(buff));
-    printf("Client: %s\nServer: %s\n",buff,loginInfo);
-    if ((strcmp(buff, loginInfo)) == 0)
-    {
-        strcpy(buff,"Confirmed");
-    } else {
-        strcpy(buff,"Failed");
-    }   
-    write(sockfd, buff, sizeof(buff));
-    printf("Data Send it %s\n", buff);
+    int confirm = 0;
     bzero(buff, MAX);
     read(sockfd, buff, sizeof(buff));
-    printf("Data Read it %s\n", buff);
-    if (strcmp(buff,"Confirmed") == 0)
+    printf("Client Login Info: %s\nServer Login Info: %s\n", buff, loginInfo);
+    if ((strcmp(buff, loginInfo)) == 0)
+    {
+        strcpy(buff, "Confirmed");
+    }
+    else
+    {
+        strcpy(buff, "Failed");
+    }
+    write(sockfd, buff, sizeof(buff));
+    bzero(buff, MAX);
+    read(sockfd, buff, sizeof(buff));
+    if (strcmp(buff, "Confirmed") == 0)
     {
         confirm = 1;
     }
-    printf("Confirm: %d\n",confirm);
-    fflush(stdin);
     return confirm;
 }
 
 int main(int argc, char **argv)
 {
-    int port = 0, port_flag = 0, username_flag = 0, password_flag = 0, sockfd, connfd, len, option;
+    int port = 0, port_flag = 0, username_flag = 0, password_flag = 0, sockfd, connfd, option;
     char *username = NULL, *password = NULL, *loginInfo;
     struct sockaddr_in servaddr, cli;
-
+    socklen_t len;
     opterr = 0;
 
     while ((option = getopt(argc, argv, "r:u:p:")) != -1)
@@ -168,31 +154,33 @@ int main(int argc, char **argv)
         connfd = accept(sockfd, (SA *)&cli, &len);
         if (connfd < 0)
         {
-            printf("server acccept failed...\n");
+            printf("Server acccept failed...\n");
             exit(0);
         }
         else
-            printf("server acccept the client...\n");
+            printf("Server acccept the client...\nChecking Username&Password\n");
 
+        //create username-password
         char *u1 = "u:";
         char *u2 = "p:";
         loginInfo = (char *)malloc(7 + strlen(username) + strlen(password));
-        strcpy(loginInfo,u1);
+        strcpy(loginInfo, u1);
         strcat(loginInfo, username);
-        strcat(loginInfo,u2);
+        strcat(loginInfo, u2);
         strcat(loginInfo, password);
-        
+
+        //Login
         if (login(loginInfo, connfd) == 1)
         {
-            printf("Login\n");
+            printf("Login Successful\n");
             fflush(stdin);
             func(connfd);
         }
         else
         {
             printf("Login Failed");
-            close(sockfd);
         }
+        close(sockfd);
     }
     else
     {
